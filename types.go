@@ -96,13 +96,14 @@ type Lobby struct {
 	Teams    []*Team
 	Admins   []*Player
 	HasBegun bool
+	Password string
 }
 
 func (l *Lobby) IsPlayerAdmin(p *Player) bool {
 	return slices.Contains(l.Admins, p)
 }
 
-func CreateLobby(creator *Player, name string, limit int, clr color.RGBA) *Lobby {
+func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, password string) *Lobby {
 	return &Lobby{
 		Limit: limit,
 		Teams: []*Team{
@@ -114,6 +115,7 @@ func CreateLobby(creator *Player, name string, limit int, clr color.RGBA) *Lobby
 		},
 		Admins:   []*Player{creator},
 		HasBegun: false,
+		Password: password,
 	}
 }
 

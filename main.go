@@ -32,6 +32,10 @@ func main() {
 			return
 		}
 		if lobbies[i] != nil {
+			if lobbies[i].Password != q.Get("password") {
+				http.Error(w, "password.invalid", http.StatusBadRequest)
+				return
+			}
 			ws, err := upgrader.Upgrade(w, r, nil)
 			if err != nil {
 				http.Error(w, "Invalid lobby", http.StatusBadRequest)
@@ -66,7 +70,7 @@ func main() {
 		pl := &Player{Ws: ws, Name: q.Get("name"), L: nil}
 
 		lid := rand.Intn(899999) + 100000
-		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, color.RGBA{})
+		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, color.RGBA{}, q.Get("password"))
 		pl.L = lobbies[lid]
 		lobbies[lid].JoinTeam(pl, 0)
 		go pl.ReceiveLoop()
