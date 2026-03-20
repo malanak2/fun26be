@@ -15,6 +15,9 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
+		//        TODO: cors for the domain
+		//        origin := r.Header.Get("Origin")
+		//        return origin == "https://your.domain.com"
 		return true
 	},
 }

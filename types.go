@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image/color"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -28,15 +29,22 @@ type PacketMessage struct {
 	Message string
 	Args    []string
 }
+type PacketInt struct {
+	Packet
+	Message string
+	Args    []int
+}
+
+func NewPacketString(mtype string, message string, args []string) PacketMessage {
+	return PacketMessage{Packet: Packet{Mtype: mtype}, Message: message, Args: args}
+}
 
 func NewPacketMessage(message string, args []string) PacketMessage {
 	return PacketMessage{Packet: Packet{Mtype: "message"}, Message: message, Args: args}
 }
 
-type PacketDisconnect struct {
-	Packet
-	Reason string
-	Args   []string
+func NewPacketInt(mtype string, message string, args []int) PacketInt {
+	return PacketInt{Packet: Packet{Mtype: mtype}, Message: message, Args: args}
 }
 
 type BasePacket struct {
@@ -44,8 +52,8 @@ type BasePacket struct {
 	Args []string
 }
 
-func NewPacketDisconnect(reason string, args []string) PacketDisconnect {
-	return PacketDisconnect{Packet: Packet{Mtype: "disconnect"}, Reason: reason, Args: args}
+func NewPacketDisconnect(reason string, args []string) PacketMessage {
+	return PacketMessage{Packet: Packet{Mtype: "disconnect"}, Message: reason, Args: args}
 }
 
 func (p *Player) SendMessage(text string, args []string) {
@@ -74,6 +82,10 @@ func (p *Player) ReceiveLoop() {
 	}
 }
 
+func NewPacketError(msg string, args []string) PacketMessage {
+	return PacketMessage{Packet: Packet{Mtype: "error"}, Message: msg, Args: args}
+}
+
 func (p *Player) HandlePacket(message string) {
 	var msg BasePacket
 	err := json.Unmarshal([]byte(message), &msg)
@@ -99,7 +111,27 @@ func (p *Player) HandlePacket(message string) {
 		p.L.BroadcastMessage(msg.Args[0], []string{p.Name})
 		return
 	}
-	p.SendPacket(NewPacketMessage("message.invalidPacket", []string{}))
+	if msg.Mtype == "getTeams" {
+		ret := make([]int, 1)
+		for i := range p.L.Teams {
+			ret = append(ret, i)
+		}
+		p.SendPacket(NewPacketInt("teams", "", ret))
+		return
+	}
+	if msg.Mtype == "getPeople" {
+		ret := make([]string, 1)
+		i, err := strconv.Atoi(msg.Args[0])
+		if err != nil {
+			p.SendPacket(NewPacketError("error.badTeam", []string{}))
+		}
+		for _, pp := range p.L.Teams[i].Players {
+			ret = append(ret, pp.Name)
+		}
+		p.SendPacket(PacketMessage{Packet: Packet{Mtype: "contestants"}, Message: "", Args: ret})
+		return
+	}
+	p.SendPacket(NewPacketError("error.badPacket", []string{}))
 }
 
 type Team struct {
