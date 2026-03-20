@@ -28,7 +28,7 @@ func main() {
 		}
 		i, err := strconv.Atoi(vars["lobby"])
 		if err != nil {
-			http.Error(w, "Invalid lobby", http.StatusBadRequest)
+			http.Error(w, "lobby.invalid", http.StatusBadRequest)
 			return
 		}
 		if lobbies[i] != nil {
@@ -38,12 +38,13 @@ func main() {
 			}
 			ws, err := upgrader.Upgrade(w, r, nil)
 			if err != nil {
-				http.Error(w, "Invalid lobby", http.StatusBadRequest)
+				http.Error(w, "lobby.invalid", http.StatusBadRequest)
 				return
 			}
 			pl := &Player{Ws: ws, Name: q.Get("name"), L: lobbies[i]}
 			lobbies[i].JoinTeam(pl, 0)
 			go pl.ReceiveLoop()
+			//			pl.SendPacket(lobbies[i])
 		}
 	})
 	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +73,6 @@ func main() {
 		lid := rand.Intn(899999) + 100000
 		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, color.RGBA{}, q.Get("password"))
 		pl.L = lobbies[lid]
-		lobbies[lid].JoinTeam(pl, 0)
 		go pl.ReceiveLoop()
 		pl.Ws.WriteJSON("{id:" + strconv.Itoa(lid) + "}")
 	})

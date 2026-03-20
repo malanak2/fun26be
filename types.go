@@ -78,7 +78,7 @@ func (p *Player) HandlePacket(message string) {
 	var msg BasePacket
 	err := json.Unmarshal([]byte(message), &msg)
 	if err != nil {
-		p.SendPacket(NewPacketMessage("message.invalidPacket", []string{}))
+		p.SendPacket(NewPacketMessage("message.invalidPacket", []string{err.Error()}))
 	}
 	if msg.Mtype == "kick" {
 		p.L.KickPlayerByName(msg.Args[0], "kick.byAnotherPlayer", []string{})
@@ -150,6 +150,7 @@ func (l *Lobby) FindPlayer(name string) *Player {
 func (l *Lobby) Broadcast(message interface{}) {
 	for _, t := range l.Teams {
 		for _, p := range t.Players {
+			fmt.Printf("Sending message to player %s %v (%v)\n", p.Name, p.Ws.RemoteAddr(), message)
 			p.SendPacket(message)
 		}
 	}
