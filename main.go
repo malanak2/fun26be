@@ -14,10 +14,14 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 func main() {
 	lobbies := make(map[int]*Lobby)
+
 	r := mux.NewRouter()
 	r.HandleFunc("/join/{lobby}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
