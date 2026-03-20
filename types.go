@@ -185,7 +185,7 @@ func (p *Player) HandlePacket(message string) {
 		return
 	}
 	if msg.Mtype == "getPeople" {
-		ret := make([]string, 1)
+		ret := make([]string, 0)
 		i, err := strconv.Atoi(msg.Args[0])
 		if err != nil || i >= len(p.L.Teams) {
 			p.SendPacket(NewPacketError("error.badTeam", []string{}))
