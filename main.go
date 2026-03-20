@@ -69,7 +69,7 @@ func main() {
 		q := r.URL.Query()
 		if q.Get("name") == "" || q.Get("lname") == "" || q.Get("lcolor") == "" {
 			http.Error(w, "Missing required parameters", http.StatusBadRequest)
-			slog.Warn("Tried to create lobby with invalid params", "origin", r.Header.Get("Origin"))
+			slog.Warn("Tried to create lobby with invalid params", "origin", r.Header.Get("Origin"), "Params", q)
 			return
 		}
 		// TODO: Implement
