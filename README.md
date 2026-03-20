@@ -69,9 +69,18 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### Promoted
 - This packet is sent to the promoted player
 - promoted(promote.promotedBy)(\[adminWhoPromoted\])
+#### Demoted
+- This packet is sent to the demoted player
+- demoted(demote.demotedBy)(\[adminWhoDemoted\])
 #### Message
 - This event comes in in case of a message
 - message(msgText)(\[authorName\])
-### Disconnect
+#### Disconnect
 - This usually comes either when the lobby closes or the player is kicked - either way it signals the termination of the connection
 - disconnect(Message)(\[byWhoName\])
+#### Player Joined
+- When a player joins, this is sent to everyone
+- playerJoin(player.join)(\[playerName, teamId\])
+#### Player Left
+- When a player leaves the lobby by any means
+- playerLeave(player.leave)(\[playerName, teamId\])

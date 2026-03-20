@@ -67,6 +67,7 @@ func (p *Player) SendPacket(packet interface{}) {
 
 func (p *Player) ReceiveLoop() {
 	defer func() {
+		p.L.Broadcast(NewPacketString("playerLeave", "player.leave", []string{p.Name, p.L.Teams[0].Name}))
 		p.L.KickPlayer(p, "player.left", []string{p.Name})
 	}()
 	for {
@@ -78,7 +79,6 @@ func (p *Player) ReceiveLoop() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, []byte{'\n'}, []byte{' '}, -1))
-		p.L.Broadcast(string(message))
 		p.HandlePacket(string(message))
 	}
 }
@@ -150,14 +150,17 @@ func (p *Player) HandlePacket(message string) {
 				if i > 0 {
 					if i < len(p.L.Admins)-1 {
 						p.L.Admins = append(p.L.Admins[:i], p.L.Admins[i+1:]...)
+						player.SendPacket(NewPacketString("demoted", "demoted.demotedBy", []string{p.Name}))
 						p.SendPacket(NewPacketString("demotePlayer", "demote.success", []string{msg.Args[0]}))
 						return
 					}
 					p.L.Admins = p.L.Admins[:i]
+					player.SendPacket(NewPacketString("demoted", "demoted.demotedBy", []string{p.Name}))
 					p.SendPacket(NewPacketString("demotePlayer", "demote.success", []string{msg.Args[0]}))
 					return
 				}
 				p.L.Admins = p.L.Admins[i:]
+				player.SendPacket(NewPacketString("demoted", "demoted.demotedBy", []string{p.Name}))
 				p.SendPacket(NewPacketString("demotePlayer", "demote.success", []string{msg.Args[0]}))
 				return
 			}
