@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golangci/golangci-lint/v2/pkg/golinters/arangolint"
+	//	"github.com/golangci/golangci-lint/v2/pkg/golinters/arangolint"
 	"github.com/gorilla/websocket"
 )
 
