@@ -72,6 +72,7 @@ func main() {
 			slog.Warn("Tried to create lobby with invalid params", "origin", r.Header.Get("Origin"))
 			return
 		}
+		// TODO: Implement
 		limit, err := strconv.Atoi(q.Get("limit"))
 		if err != nil {
 			limit = 10
@@ -96,6 +97,7 @@ func main() {
 		for exists {
 			rec++
 			if rec > 11 {
+				slog.Warn("Ran out of lobby numbers")
 				http.Error(w, "Cannot create more lobbies", http.StatusInsufficientStorage)
 				return
 			}

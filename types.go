@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/icza/gox/imagex/colorx"
 )
 
 type Player struct {
@@ -171,6 +172,22 @@ func (p *Player) HandlePacket(message string) {
 			p.SendPacket(NewPacketString("demotePlayer", "error.playerNotAdmin", []string{msg.Args[0]}))
 			return
 		}
+		if msg.Mtype == "createTeam" {
+			col, err := colorx.ParseHexColor(msg.Args[1])
+			if err != nil {
+				p.SendPacket(NewPacketError("createTeam.failed", []string{"Bad color"}))
+				slog.Warn("Failed to create team - bad color", "error", err.Error())
+				return
+			}
+			t := Team{
+				Players: make([]*Player, 0),
+				Name:    msg.Args[0],
+				Color:   col,
+			}
+			p.L.Teams = append(p.L.Teams, &t)
+			p.L.Broadcast(NewPacketAny("newTeam", strconv.Itoa(len(p.L.Teams)-1), []any{msg.Args[0], col}))
+			return
+		}
 	}
 	if msg.Mtype == "message" {
 		p.L.BroadcastMessage(msg.Args[0], []string{p.Name})
@@ -206,6 +223,17 @@ func (p *Player) HandlePacket(message string) {
 			"teamInfo",
 			msg.Args[0],
 			[]any{NWTeamFromTeam(p.L.Teams[i])}))
+		return
+	}
+	if msg.Mtype == "moveTeam" {
+		i, err := strconv.Atoi(msg.Args[0])
+		if err != nil || len(p.L.Teams) <= i {
+			p.SendPacket(NewPacketError("changeTeam.badId", []string{}))
+			return
+		}
+		p.L.RemovePlayer(p)
+		p.L.JoinTeam(p, i)
+		p.L.Broadcast(NewPacketInt("changeTeam", p.Name, []int{i}))
 		return
 	}
 	p.SendPacket(NewPacketError("error.badPacket", []string{}))

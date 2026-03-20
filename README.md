@@ -51,6 +51,9 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 - This returns the people in the team
 - getPeople(\[teamid\]) -> contestants(teamId)(\["Jan Bures", "Andrej Bures"\])
 
+#### Change Team
+- Call this to change team. It broadcasts its response unless it errors out. For that, see Passive events
+- moveTeam(\[teamId\]) -> changeTeam(error)(\[\]) 
 
 
 ### Admin packets -- these require the player to be an admin. By default, only the lobby creator is one
@@ -64,6 +67,9 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### demote a player
 - Demotes an admin player, Result is either demote.success, error.playerNotAdmin or error.noSuchPlayer
 - demote(\[playerName\]) -> demotePlayer(Result?)([playerName])
+#### Create Team
+- Creates a team
+- createTeam(\[name, color\]) -> Broadcasted - see in passive events
 
 ## Passive events - these could happen any time
 #### Promoted
@@ -84,3 +90,9 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### Player Left
 - When a player leaves the lobby by any means
 - playerLeave(player.leave)(\[playerName, teamId\])
+#### New team
+- is sent when a new team is created
+- newTeam(name)(\[color\])
+#### Change Team
+- Is sent when a player changes his team
+- changeTeam(name)(\[teamId\])
