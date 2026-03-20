@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golangci/golangci-lint/v2/pkg/golinters/arangolint"
 	"github.com/gorilla/websocket"
 )
 
@@ -82,6 +83,24 @@ func (p *Player) ReceiveLoop() {
 	}
 }
 
+type PacketAny struct {
+	Packet
+	message string
+	Args    []any
+}
+
+func NewPacketAny(mtype string, message string, args []any) PacketAny {
+	return PacketAny{Packet{mtype}, message, args}
+}
+
+func (p *PacketAny) Compile() PacketMessage {
+	r := PacketMessage{Packet: p.Packet, Message: p.message, Args: make([]string, 0)}
+	for _, i := range p.Args {
+		r.Args = append(r.Args, fmt.Sprintf("%v", i))
+	}
+	return r
+}
+
 func NewPacketError(msg string, args []string) PacketMessage {
 	return PacketMessage{Packet: Packet{Mtype: "error"}, Message: msg, Args: args}
 }
@@ -112,7 +131,7 @@ func (p *Player) HandlePacket(message string) {
 		return
 	}
 	if msg.Mtype == "getTeams" {
-		ret := make([]int, 1)
+		ret := make([]int, 0)
 		for i := range p.L.Teams {
 			ret = append(ret, i)
 		}
@@ -122,13 +141,25 @@ func (p *Player) HandlePacket(message string) {
 	if msg.Mtype == "getPeople" {
 		ret := make([]string, 1)
 		i, err := strconv.Atoi(msg.Args[0])
-		if err != nil {
+		if err != nil || i >= len(p.L.Teams) {
 			p.SendPacket(NewPacketError("error.badTeam", []string{}))
 		}
 		for _, pp := range p.L.Teams[i].Players {
 			ret = append(ret, pp.Name)
 		}
 		p.SendPacket(PacketMessage{Packet: Packet{Mtype: "contestants"}, Message: "", Args: ret})
+		return
+	}
+	if msg.Mtype == "getTeam" {
+		i, err := strconv.Atoi(msg.Args[0])
+		if err != nil || i >= len(p.L.Teams) {
+			p.SendPacket(NewPacketError("error.badTeam", []string{}))
+			return
+		}
+		p.SendPacket(NewPacketAny(
+			"teamInfo",
+			msg.Args[0],
+			[]any{p.L.Teams[i]}))
 		return
 	}
 	p.SendPacket(NewPacketError("error.badPacket", []string{}))
