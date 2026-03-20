@@ -1,14 +1,15 @@
 package main
 
 import (
-	"image/color"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/icza/gox/imagex/colorx"
 )
 
 var upgrader = websocket.Upgrader{
@@ -59,28 +60,29 @@ func main() {
 	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		q := r.URL.Query()
-		if q.Get("name") == "" || q.Get("lname") == "" /* || q.Get("lcolor") == ""*/ {
+		if q.Get("name") == "" || q.Get("lname") == "" || q.Get("lcolor") == "" {
 			http.Error(w, "Missing required parameters", http.StatusBadRequest)
+			slog.Warn("Tried to create lobby with invalid params", "origin", r.Header.Get("Origin"))
 			return
 		}
 		limit, err := strconv.Atoi(q.Get("limit"))
 		if err != nil {
 			limit = 10
 		}
-		/*col, err := colorx.ParseHexColor(q.Get("lcolor"))
+		col, err := colorx.ParseHexColor(q.Get("lcolor"))
 		if err != nil {
 			http.Error(w, "Invalid color", http.StatusBadRequest)
+			slog.Warn("Failed to create lobby - bad color", "error", err.Error())
 			return
-		}*/
+		}
 		ws, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Fatal("test" + err.Error())
+			slog.Warn("Failed to upgrade", "err", err.Error(), "origin", r.Header.Get("Origin"))
 			return
 		}
 
 		pl := &Player{Ws: ws, Name: q.Get("name"), L: nil}
 
-		// TODO: Overlapping lobbies
 		lid := rand.Intn(899999) + 100000
 		_, exists := lobbies[lid]
 		rec := 0
@@ -93,7 +95,7 @@ func main() {
 			lid = rand.Intn(899999) + 100000
 			_, exists = lobbies[lid]
 		}
-		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, color.RGBA{}, q.Get("password"))
+		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, col, q.Get("password"))
 		pl.L = lobbies[lid]
 		go pl.ReceiveLoop()
 		pl.Ws.WriteJSON("{id:" + strconv.Itoa(lid) + "}")

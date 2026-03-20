@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
 
-	//	"github.com/golangci/golangci-lint/v2/pkg/golinters/arangolint"
 	"github.com/gorilla/websocket"
 )
 
@@ -69,16 +69,20 @@ func (p *Player) ReceiveLoop() {
 	defer func() {
 		p.L.Broadcast(NewPacketString("playerLeave", "player.leave", []string{p.Name, p.L.Teams[0].Name}))
 		p.L.KickPlayer(p, "player.left", []string{p.Name})
+		if p == p.L.Owner {
+			p.L.DestroyLobby()
+		}
 	}()
 	for {
 		_, message, err := p.Ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("error: %v", err)
+				slog.Warn("Connection closed abruptly", "err", err.Error())
 			}
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, []byte{'\n'}, []byte{' '}, -1))
+		slog.Info("Received packet from player", "player", p.Name, "packet", string(message))
 		p.HandlePacket(string(message))
 	}
 }
@@ -226,6 +230,7 @@ type Lobby struct {
 	Limit    int
 	Teams    []*Team
 	Admins   []*Player
+	Owner    *Player
 	HasBegun bool
 	Password string
 }
@@ -235,6 +240,7 @@ func (l *Lobby) IsPlayerAdmin(p *Player) bool {
 }
 
 func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, password string) *Lobby {
+	slog.Info("Creating lobby", "owner", creator.Name, "lName", name)
 	return &Lobby{
 		Limit: limit,
 		Teams: []*Team{
@@ -245,23 +251,27 @@ func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, passwo
 			},
 		},
 		Admins:   []*Player{creator},
+		Owner:    creator,
 		HasBegun: false,
 		Password: password,
 	}
 }
 
 func (l *Lobby) AddTeam(name string, clr color.RGBA) int {
+	slog.Info("Creating team", "name", name)
 	l.Teams = append(l.Teams, &Team{Name: name, Color: clr})
 	return len(l.Teams) - 1
 }
 
 func (l *Lobby) JoinTeam(pl *Player, team int) {
+	slog.Info("Player joining team", "player", pl.Name, "team", team)
 	l.Teams[team].Players = append(l.Teams[team].Players, pl)
 }
 
 func (l *Lobby) RemovePlayer(pl *Player) {
-	for _, t := range l.Teams {
+	for i, t := range l.Teams {
 		if slices.Contains(t.Players, pl) {
+			slog.Info("Removing player from team", "player", pl.Name, "team", i)
 			ind := slices.Index(t.Players, pl)
 			t.Players = append(t.Players[:ind], t.Players[ind+1:]...)
 		}
@@ -281,30 +291,36 @@ func (l *Lobby) FindPlayer(name string) *Player {
 func (l *Lobby) Broadcast(message interface{}) {
 	for _, t := range l.Teams {
 		for _, p := range t.Players {
-			fmt.Printf("Sending message to player %s %v (%v)\n", p.Name, p.Ws.RemoteAddr(), message)
+			slog.Info("Sending message to player", "msg", message, "player", p.Name)
 			p.SendPacket(message)
 		}
 	}
 }
 
 func (l *Lobby) BroadcastMessage(message string, args []string) {
+	slog.Info("Broadcasting a mesages", "msg", message)
 	l.Broadcast(NewPacketMessage(message, args))
 }
 
 func (l *Lobby) Leave(pl *Player) {
 	l.RemovePlayer(pl)
 	l.BroadcastMessage("player.left", []string{pl.Name})
+	if pl == l.Owner {
+		l.DestroyLobby()
+	}
 }
 
 func (l *Lobby) ChangeTeam(pl *Player, team int) {
+	slog.Info("Player changing teams", "player", pl.Name, "newTeamId", team)
 	l.RemovePlayer(pl)
 	l.JoinTeam(pl, team)
 }
 
 func (l *Lobby) KickPlayer(pl *Player, reason string, args []string) {
+	slog.Info("Kicking player", "player", pl.Name, "reason", reason)
 	l.RemovePlayer(pl)
 	pl.SendPacket(NewPacketDisconnect(reason, args))
-	pl.Ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(100))
+	pl.Ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(1))
 	pl.Ws.Close()
 }
 func (l *Lobby) KickPlayerByName(name string, reason string, args []string) error {
@@ -319,6 +335,7 @@ func (l *Lobby) KickPlayerByName(name string, reason string, args []string) erro
 }
 
 func (l *Lobby) DestroyLobby() {
+	slog.Info("Destroying lobby")
 	l.Broadcast(NewPacketDisconnect("lobby.close", []string{}))
 	l.Admins = nil
 	l.Teams = nil
