@@ -20,6 +20,7 @@ func main() {
 	lobbies := make(map[int]*Lobby)
 	r := mux.NewRouter()
 	r.HandleFunc("/join/{lobby}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		vars := mux.Vars(r)
 		q := r.URL.Query()
 		if q.Get("name") == "" {
@@ -49,6 +50,7 @@ func main() {
 		}
 	})
 	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		q := r.URL.Query()
 		if q.Get("name") == "" || q.Get("lname") == "" /* || q.Get("lcolor") == ""*/ {
 			http.Error(w, "Missing required parameters", http.StatusBadRequest)
@@ -90,5 +92,6 @@ func main() {
 		pl.Ws.WriteJSON("{id:" + strconv.Itoa(lid) + "}")
 	})
 	//	http.Handle("/", r)
+	r.Use(mux.CORSMethodMiddleware(r))
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
