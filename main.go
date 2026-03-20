@@ -102,5 +102,6 @@ func main() {
 	})
 	//	http.Handle("/", r)
 	r.Use(mux.CORSMethodMiddleware(r))
+	slog.Info("Now serving", "port", "8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
