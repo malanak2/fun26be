@@ -336,7 +336,11 @@ func (l *Lobby) KickPlayerByName(name string, reason string, args []string) erro
 
 func (l *Lobby) DestroyLobby() {
 	slog.Info("Destroying lobby")
-	l.Broadcast(NewPacketDisconnect("lobby.close", []string{}))
+	for _, t := range l.Teams {
+		for _, p := range t.Players {
+			l.KickPlayer(p, "lobby.close", []string{})
+		}
+	}
 	l.Admins = nil
 	l.Teams = nil
 }

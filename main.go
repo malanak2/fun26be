@@ -40,22 +40,29 @@ func main() {
 			http.Error(w, "lobby.invalid", http.StatusBadRequest)
 			return
 		}
-		if lobbies[i] != nil {
-			if lobbies[i].Password != q.Get("password") {
-				http.Error(w, "password.invalid", http.StatusBadRequest)
-				return
-			}
-			ws, err := upgrader.Upgrade(w, r, nil)
-			if err != nil {
-				http.Error(w, "lobby.invalid", http.StatusBadRequest)
-				return
-			}
-			pl := &Player{Ws: ws, Name: q.Get("name"), L: lobbies[i]}
-			lobbies[i].JoinTeam(pl, 0)
-			go pl.ReceiveLoop()
-			pl.L.Broadcast(NewPacketString("playerJoin", "player.join", []string{pl.Name, lobbies[i].Teams[0].Name}))
-			//			pl.SendPacket(lobbies[i])
+		val, ok := lobbies[i]
+		if !ok {
+			http.Error(w, "lobby.invalid", http.StatusBadRequest)
+			return
 		}
+		if val.Teams == nil {
+			http.Error(w, "lobby.invalid", http.StatusBadRequest)
+			delete(lobbies, i)
+			return
+		}
+		if val.Password != q.Get("password") {
+			http.Error(w, "password.invalid", http.StatusBadRequest)
+			return
+		}
+		ws, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			http.Error(w, "lobby.invalid", http.StatusBadRequest)
+			return
+		}
+		pl := &Player{Ws: ws, Name: q.Get("name"), L: val}
+		val.JoinTeam(pl, 0)
+		go pl.ReceiveLoop()
+		pl.L.Broadcast(NewPacketString("playerJoin", "player.join", []string{pl.Name, "0"}))
 	})
 	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
