@@ -113,16 +113,55 @@ func (p *Player) HandlePacket(message string) {
 	}
 	if slices.Contains(p.L.Admins, p) {
 		if msg.Mtype == "kick" {
-			p.L.KickPlayerByName(msg.Args[0], "kick.byAnotherPlayer", []string{p.Name})
+			if p.L.IsPlayerAdmin(p.L.FindPlayer(msg.Args[0])) {
+				p.SendPacket(NewPacketString("playerKick", "error.playerIsAdmin", []string{}))
+				return
+			}
+			err := p.L.KickPlayerByName(msg.Args[0], "kick.byAnotherPlayer", []string{p.Name})
+			if err != nil {
+				p.SendPacket(NewPacketString("playerKick", "error.noSuchPlayer", []string{}))
+				return
+			}
+			p.SendPacket(NewPacketString("playerKick", "kick.success", []string{}))
 			return
 		}
 		if msg.Mtype == "promote" {
+			player := p.L.FindPlayer(msg.Args[0])
+			if player == nil {
+				p.SendPacket(NewPacketString("promotePlayer", "error.noSuchPlayer", []string{msg.Args[0]}))
+				return
+			}
+			if slices.Contains(p.L.Admins, player) {
+				p.SendPacket(NewPacketString("promotePlayer", "error.playerIsAdmin", []string{msg.Args[0]}))
+			}
 			p.L.Admins = append(p.L.Admins, p.L.FindPlayer(msg.Args[0]))
+			player.SendPacket(NewPacketString("promoted", "promote.promotedBy", []string{p.Name}))
+			p.SendPacket(NewPacketString("promotePlayer", "promote.success", []string{msg.Args[0]}))
 			return
 		}
 		if msg.Mtype == "demote" {
-			if slices.Contains(p.L.Admins, p.L.FindPlayer(msg.Args[0])) {
+			player := p.L.FindPlayer(msg.Args[0])
+			if player == nil {
+				p.SendPacket(NewPacketString("demotePlayer", "error.noSuchPlayer", []string{msg.Args[0]}))
+				return
 			}
+			if slices.Contains(p.L.Admins, player) {
+				i := slices.Index(p.L.Admins, player)
+				if i > 0 {
+					if i < len(p.L.Admins)-1 {
+						p.L.Admins = append(p.L.Admins[:i], p.L.Admins[i+1:]...)
+						p.SendPacket(NewPacketString("demotePlayer", "demote.success", []string{msg.Args[0]}))
+						return
+					}
+					p.L.Admins = p.L.Admins[:i]
+					p.SendPacket(NewPacketString("demotePlayer", "demote.success", []string{msg.Args[0]}))
+					return
+				}
+				p.L.Admins = p.L.Admins[i:]
+				p.SendPacket(NewPacketString("demotePlayer", "demote.success", []string{msg.Args[0]}))
+				return
+			}
+			p.SendPacket(NewPacketString("demotePlayer", "error.playerNotAdmin", []string{msg.Args[0]}))
 			return
 		}
 	}
@@ -159,7 +198,7 @@ func (p *Player) HandlePacket(message string) {
 		p.SendPacket(NewPacketAny(
 			"teamInfo",
 			msg.Args[0],
-			[]any{p.L.Teams[i]}))
+			[]any{NWTeamFromTeam(p.L.Teams[i])}))
 		return
 	}
 	p.SendPacket(NewPacketError("error.badPacket", []string{}))
@@ -169,6 +208,15 @@ type Team struct {
 	Players []*Player
 	Name    string
 	Color   color.RGBA
+}
+
+type NWTeam struct {
+	Name  string
+	Color color.RGBA
+}
+
+func NWTeamFromTeam(t *Team) NWTeam {
+	return NWTeam{Name: t.Name, Color: t.Color}
 }
 
 type Lobby struct {

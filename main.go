@@ -52,7 +52,7 @@ func main() {
 			pl := &Player{Ws: ws, Name: q.Get("name"), L: lobbies[i]}
 			lobbies[i].JoinTeam(pl, 0)
 			go pl.ReceiveLoop()
-			pl.L.Broadcast(NewPacketMessage("player.join", []string{pl.Name}))
+			pl.L.Broadcast(NewPacketString("playerJoin", "player.join", []string{pl.Name}))
 			//			pl.SendPacket(lobbies[i])
 		}
 	})
