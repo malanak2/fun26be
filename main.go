@@ -44,6 +44,7 @@ func main() {
 			pl := &Player{Ws: ws, Name: q.Get("name"), L: lobbies[i]}
 			lobbies[i].JoinTeam(pl, 0)
 			go pl.ReceiveLoop()
+			pl.L.Broadcast(NewPacketMessage("player.join", []string{pl.Name}))
 			//			pl.SendPacket(lobbies[i])
 		}
 	})
@@ -64,13 +65,25 @@ func main() {
 		}*/
 		ws, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Fatal("test")
+			log.Fatal("test" + err.Error())
 			return
 		}
 
 		pl := &Player{Ws: ws, Name: q.Get("name"), L: nil}
 
+		// TODO: Overlapping lobbies
 		lid := rand.Intn(899999) + 100000
+		_, exists := lobbies[lid]
+		rec := 0
+		for exists {
+			rec++
+			if rec > 11 {
+				http.Error(w, "Cannot create more lobbies", http.StatusInsufficientStorage)
+				return
+			}
+			lid = rand.Intn(899999) + 100000
+			_, exists = lobbies[lid]
+		}
 		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, color.RGBA{}, q.Get("password"))
 		pl.L = lobbies[lid]
 		go pl.ReceiveLoop()

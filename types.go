@@ -80,9 +80,26 @@ func (p *Player) HandlePacket(message string) {
 	if err != nil {
 		p.SendPacket(NewPacketMessage("message.invalidPacket", []string{err.Error()}))
 	}
-	if msg.Mtype == "kick" {
-		p.L.KickPlayerByName(msg.Args[0], "kick.byAnotherPlayer", []string{})
+	if slices.Contains(p.L.Admins, p) {
+		if msg.Mtype == "kick" {
+			p.L.KickPlayerByName(msg.Args[0], "kick.byAnotherPlayer", []string{p.Name})
+			return
+		}
+		if msg.Mtype == "promote" {
+			p.L.Admins = append(p.L.Admins, p.L.FindPlayer(msg.Args[0]))
+			return
+		}
+		if msg.Mtype == "demote" {
+			if slices.Contains(p.L.Admins, p.L.FindPlayer(msg.Args[0])) {
+			}
+			return
+		}
 	}
+	if msg.Mtype == "message" {
+		p.L.BroadcastMessage(msg.Args[0], []string{p.Name})
+		return
+	}
+	p.SendPacket(NewPacketMessage("message.invalidPacket", []string{}))
 }
 
 type Team struct {
