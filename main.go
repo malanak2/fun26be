@@ -25,7 +25,7 @@ var upgrader = websocket.Upgrader{
 
 func main() {
 	lobbies := make(map[int]*Lobby)
-
+	//	slog.Info("asdf", "v", FetchQuestions(InputJsonRoutes{Start: Coordinate{Lon: 14.4371, Lat: 50.0754}, End: Coordinate{Lon: 14.4162, Lat: 50.0948}, NumberOfWaypoints: 4}))
 	r := mux.NewRouter()
 	r.HandleFunc("/join/{lobby}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -48,6 +48,10 @@ func main() {
 		if val.Teams == nil {
 			http.Error(w, "lobby.invalid", http.StatusBadRequest)
 			delete(lobbies, i)
+			return
+		}
+		if val.HasBegun {
+			http.Error(w, "lobby.started", http.StatusBadRequest)
 			return
 		}
 		if val.Password != q.Get("password") {

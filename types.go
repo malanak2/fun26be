@@ -188,6 +188,11 @@ func (p *Player) HandlePacket(message string) {
 			p.L.Broadcast(NewPacketAny("newTeam", strconv.Itoa(len(p.L.Teams)-1), []any{msg.Args[0], col}))
 			return
 		}
+		if msg.Mtype == "startGame" {
+			p.L.StartGame()
+			// TODO: call mathias + dan api
+			return
+		}
 	}
 	if msg.Mtype == "message" {
 		p.L.BroadcastMessage(msg.Args[0], []string{p.Name})
@@ -263,6 +268,7 @@ type Lobby struct {
 	Owner    *Player
 	HasBegun bool
 	Password string
+	Data     *[]RouteWaypointQuest
 }
 
 func (l *Lobby) IsPlayerAdmin(p *Player) bool {
@@ -362,6 +368,11 @@ func (l *Lobby) KickPlayerByName(name string, reason string, args []string) erro
 	pl.SendPacket(NewPacketDisconnect(reason, args))
 	pl.Ws.Close()
 	return nil
+}
+
+func (l *Lobby) StartGame() {
+	l.HasBegun = true
+	l.Broadcast(NewPacketString("gameStart", "", []string{}))
 }
 
 func (l *Lobby) DestroyLobby() {

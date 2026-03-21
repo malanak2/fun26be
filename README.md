@@ -70,6 +70,9 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### Create Team
 - Creates a team
 - createTeam(\[name, color\]) -> Broadcasted - see in passive events
+#### Start Game
+- starts the game
+- startGame(\[\]) -> Broadcasted - see in passive events
 
 ## Passive events - these could happen any time
 #### Promoted
@@ -96,3 +99,6 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### Change Team
 - Is sent when a player changes his team
 - changeTeam(name)(\[teamId\])
+#### Start game
+- When the game begins, all players are sent this packet
+- gameStart()(\[\])
