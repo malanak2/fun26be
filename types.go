@@ -192,6 +192,46 @@ func (p *Player) HandlePacket(message string) {
 			p.L.StartGame()
 			return
 		}
+		if msg.Mtype == "setBeginCoords" {
+			latF, err := strconv.ParseFloat(msg.Args[0], 64)
+			if err != nil {
+				p.SendPacket(NewPacketError("latitude.bad", []string{msg.Args[0]}))
+				return
+			}
+			lonF, err := strconv.ParseFloat(msg.Args[1], 64)
+			if err != nil {
+				p.SendPacket(NewPacketError("longtitude.bad", []string{msg.Args[1]}))
+				return
+			}
+			p.L.Start = Coordinate{Lat: latF, Lon: lonF}
+			p.L.Broadcast(NewPacketAny("newBegin", "", []any{p.L.Start.Lat, p.L.Start.Lon}))
+			return
+		}
+		if msg.Mtype == "setEndCoords" {
+			latF, err := strconv.ParseFloat(msg.Args[0], 64)
+			if err != nil {
+				p.SendPacket(NewPacketError("latitude.bad", []string{msg.Args[0]}))
+				return
+			}
+			lonF, err := strconv.ParseFloat(msg.Args[1], 64)
+			if err != nil {
+				p.SendPacket(NewPacketError("longtitude.bad", []string{msg.Args[1]}))
+				return
+			}
+			p.L.End = Coordinate{Lat: latF, Lon: lonF}
+			p.L.Broadcast(NewPacketAny("newEnd", "", []any{p.L.End.Lat, p.L.End.Lon}))
+			return
+		}
+		if msg.Mtype == "setPOICount" {
+			i, err := strconv.Atoi(msg.Args[0])
+			if err != nil {
+				p.SendPacket(NewPacketError("poicount.bad", []string{msg.Args[0]}))
+				return
+			}
+			p.L.POICount = i
+			p.L.Broadcast(NewPacketAny("newPOICount", "", []any{p.L.POICount}))
+			return
+		}
 	}
 	if msg.Mtype == "message" {
 		p.L.BroadcastMessage(msg.Args[0], []string{p.Name})

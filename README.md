@@ -76,6 +76,17 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### Start Game
 - starts the game
 - startGame(\[\]) -> Broadcasted - see in passive events
+#### Set Start coords
+- sets the beginning coords
+- setBeginCoords(\[latitude, longtitude\]) -> change broadcaster or error
+#### Set End coords
+- sets the end coords
+- setEndCoords(\[latitude, longtitude\]) -> change broadcaster or error
+#### Set POI count
+- sets the POI count
+- setPOICount(\[count\]) -> change broadcaster or error
+
+
 
 ## Passive events - these could happen any time
 #### Promoted
@@ -105,3 +116,12 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### Start game
 - When the game begins, all players are sent this packet
 - gameStart()(\[\])
+#### New Begin
+- When begin changes
+- newBegin()(\[lat, lon\])
+#### New End
+- When end changes
+- newEnd()(\[lat, lon\])
+#### New Begin
+- When poicount changes
+- newPOICount()(\[count\])
