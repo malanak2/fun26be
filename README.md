@@ -33,6 +33,9 @@ Example return:
 Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "Player2"\])
                     ^ The Mtype ^ Args var ^ resp Mtype ^ Msg  ^Args content
 
+## TO CREATE A LOBBY, THE QUERY PARAMAS THAT ARE REQUIRED ARE name, lname, lat, lon (name = playerName, lname = main team name,lat, lon are beginning coords - use current?)
+## TO JOIN A LOBBY, ONLY name IS REQUIRED IN QUERY PARAMS
+
 ## Possible packets and their response
 ### Normal
 #### Message

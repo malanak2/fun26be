@@ -190,7 +190,6 @@ func (p *Player) HandlePacket(message string) {
 		}
 		if msg.Mtype == "startGame" {
 			p.L.StartGame()
-			// TODO: call mathias + dan api
 			return
 		}
 	}
@@ -269,14 +268,27 @@ type Lobby struct {
 	HasBegun bool
 	Password string
 	Data     *[]RouteWaypointQuest
+	Start    Coordinate
+	End      Coordinate
+	POICount int
 }
 
 func (l *Lobby) IsPlayerAdmin(p *Player) bool {
 	return slices.Contains(l.Admins, p)
 }
 
-func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, password string) *Lobby {
+func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, password string, lat string, lon string) *Lobby {
 	slog.Info("Creating lobby", "owner", creator.Name, "lName", name)
+	latF, err := strconv.ParseFloat(lat, 64)
+	if err != nil {
+		slog.Warn("Invalid lat", "lat", lat)
+		return nil
+	}
+	lonF, err := strconv.ParseFloat(lon, 64)
+	if err != nil {
+		slog.Warn("Invalid lon", "lon", lon)
+		return nil
+	}
 	return &Lobby{
 		Limit: limit,
 		Teams: []*Team{
@@ -290,6 +302,7 @@ func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, passwo
 		Owner:    creator,
 		HasBegun: false,
 		Password: password,
+		Start:    Coordinate{latF, lonF},
 	}
 }
 
@@ -373,6 +386,8 @@ func (l *Lobby) KickPlayerByName(name string, reason string, args []string) erro
 func (l *Lobby) StartGame() {
 	l.HasBegun = true
 	l.Broadcast(NewPacketString("gameStart", "", []string{}))
+	// TODO: call mathias + dan api
+	l.Data = FetchQuestions(InputJsonRoutes{Start: l.Start, End: l.End, NumberOfWaypoints: l.POICount})
 }
 
 func (l *Lobby) DestroyLobby() {

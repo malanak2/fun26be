@@ -71,7 +71,7 @@ func main() {
 	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		q := r.URL.Query()
-		if q.Get("name") == "" || q.Get("lname") == "" || q.Get("lcolor") == "" {
+		if q.Get("name") == "" || q.Get("lname") == "" /*|| q.Get("lcolor") == ""*/ || q.Get("lat") == "" || q.Get("lon") == "" {
 			http.Error(w, "Missing required parameters", http.StatusBadRequest)
 			slog.Warn("Tried to create lobby with invalid params", "origin", r.Header.Get("Origin"), "Params", q)
 			return
@@ -108,7 +108,7 @@ func main() {
 			lid = rand.Intn(899999) + 100000
 			_, exists = lobbies[lid]
 		}
-		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, col, q.Get("password"))
+		lobbies[lid] = CreateLobby(pl, q.Get("lname"), limit, col, q.Get("password"), q.Get("lat"), q.Get("lon"))
 		pl.L = lobbies[lid]
 		go pl.ReceiveLoop()
 		pl.Ws.WriteJSON("{id:" + strconv.Itoa(lid) + "}")

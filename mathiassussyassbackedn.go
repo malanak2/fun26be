@@ -110,13 +110,6 @@ type InputJsonRoutes struct {
 	NumberOfWaypoints int        `json:"numberOfWaypoints"`
 }
 
-func ToIJQ(b BalancedRouteResponse) InputJsonQuestions {
-	i := InputJsonQuestions{}
-	i.Lang = Language("Czech")
-	i.Routes = map[string][]Waypoint{}
-	return i
-}
-
 func FetchQuestions(r InputJsonRoutes) *[]RouteWaypointQuest {
 	m, err := json.Marshal(r)
 	if err != nil {
