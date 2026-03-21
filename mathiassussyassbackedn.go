@@ -110,18 +110,18 @@ type InputJsonRoutes struct {
 	NumberOfWaypoints int        `json:"numberOfWaypoints"`
 }
 
-func FetchQuestions(r InputJsonRoutes) *[]RouteWaypointQuest {
+func FetchQuestions(r InputJsonRoutes) (*BalancedRouteResponse, *[]RouteWaypointQuest) {
 	m, err := json.Marshal(r)
 	if err != nil {
 		slog.Warn("Failed to marshal IJS", "ijs", r)
-		return &[]RouteWaypointQuest{}
+		return nil, nil
 	}
 	jsonBody := []byte(m)
 	bodyReader := bytes.NewReader(jsonBody)
 	res, err := http.Post(MathiasLink+"/waypoints", "application/json", bodyReader)
 	if err != nil {
 		slog.Warn("Failed to post to /waypoints" + err.Error())
-		return &[]RouteWaypointQuest{}
+		return nil, nil
 	}
 	slog.Info("Before parse", "parse", res.Body)
 	defer res.Body.Close()
@@ -129,27 +129,27 @@ func FetchQuestions(r InputJsonRoutes) *[]RouteWaypointQuest {
 	derr := json.NewDecoder(res.Body).Decode(&post)
 	if derr != nil {
 		slog.Error("Failed to decode whateve" + derr.Error())
-		return &[]RouteWaypointQuest{}
+		return nil, nil
 	}
 	slog.Info("Post", "post", post)
 	m, err = json.Marshal(post)
 	if err != nil {
 		slog.Warn("Failed to marshal IJS", "ijs", r)
-		return &[]RouteWaypointQuest{}
+		return nil, nil
 	}
 	jsonBody = []byte(m)
 	bodyReader = bytes.NewReader(jsonBody)
 	res, err = http.Post(MathiasLink+"/questions", "application/json", bodyReader)
 	if err != nil {
 		slog.Warn("Failed to post to /questions" + err.Error())
-		return &[]RouteWaypointQuest{}
+		return nil, nil
 	}
 	defer res.Body.Close()
 	post2 := &[]RouteWaypointQuest{}
 	derr = json.NewDecoder(res.Body).Decode(&post2)
 	if derr != nil {
 		slog.Error("Failed to decode []RWQ")
-		return &[]RouteWaypointQuest{}
+		return nil, nil
 	}
-	return post2
+	return post, post2
 }

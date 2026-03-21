@@ -125,3 +125,9 @@ Simplified notation: getPeople(\[teamId\]) -> contestants(teamId)(\["Player1", "
 #### New Begin
 - When poicount changes
 - newPOICount()(\[count\])
+#### Game data quests
+- Data of the game quests
+- gameDataQuests()(\[\[\]RouteWaypointQuest\])
+#### Game data routes
+- Data of the game routes
+- gameDataRoutes()(\[BalancedRouteResponse\])

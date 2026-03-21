@@ -301,16 +301,17 @@ func NWTeamFromTeam(t *Team) NWTeam {
 }
 
 type Lobby struct {
-	Limit    int
-	Teams    []*Team
-	Admins   []*Player
-	Owner    *Player
-	HasBegun bool
-	Password string
-	Data     *[]RouteWaypointQuest
-	Start    Coordinate
-	End      Coordinate
-	POICount int
+	Limit     int
+	Teams     []*Team
+	Admins    []*Player
+	Owner     *Player
+	HasBegun  bool
+	Password  string
+	DataRoute *BalancedRouteResponse
+	DataQuest *[]RouteWaypointQuest
+	Start     Coordinate
+	End       Coordinate
+	POICount  int
 }
 
 func (l *Lobby) IsPlayerAdmin(p *Player) bool {
@@ -429,7 +430,9 @@ func (l *Lobby) StartGame() {
 	l.HasBegun = true
 	l.Broadcast(NewPacketString("gameStart", "", []string{}))
 	// TODO: call mathias + dan api
-	l.Data = FetchQuestions(InputJsonRoutes{Start: l.Start, End: l.End, NumberOfWaypoints: l.POICount})
+	l.DataRoute, l.DataQuest = FetchQuestions(InputJsonRoutes{Start: l.Start, End: l.End, NumberOfWaypoints: l.POICount})
+	l.Broadcast(NewPacketAny("gameDataQuests", "", []any{l.DataQuest}))
+	l.Broadcast(NewPacketAny("gameDataRoute", "", []any{l.DataRoute}))
 }
 
 func (l *Lobby) DestroyLobby() {
