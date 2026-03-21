@@ -67,6 +67,9 @@ func main() {
 		val.JoinTeam(pl, 0)
 		go pl.ReceiveLoop()
 		pl.L.Broadcast(NewPacketString("playerJoin", "player.join", []string{pl.Name, "0"}))
+		pl.SendPacket(NewPacketAny("newBegin", "", []any{pl.L.Start.Lat, pl.L.Start.Lon}))
+		pl.SendPacket(NewPacketAny("newEnd", "", []any{pl.L.End.Lat, pl.L.End.Lon}))
+		pl.SendPacket(NewPacketAny("newPOICount", "", []any{pl.L.POICount}))
 	})
 	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

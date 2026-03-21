@@ -343,6 +343,8 @@ func CreateLobby(creator *Player, name string, limit int, clr color.RGBA, passwo
 		HasBegun: false,
 		Password: password,
 		Start:    Coordinate{latF, lonF},
+		End:      Coordinate{latF, lonF},
+		POICount: 4,
 	}
 }
 
