@@ -90,7 +90,7 @@ func (p *Player) ReceiveLoop() {
 
 type PacketAny struct {
 	Packet
-	message string
+	Message string
 	Args    []any
 }
 
@@ -99,7 +99,7 @@ func NewPacketAny(mtype string, message string, args []any) PacketAny {
 }
 
 func (p *PacketAny) Compile() PacketMessage {
-	r := PacketMessage{Packet: p.Packet, Message: p.message, Args: make([]string, 0)}
+	r := PacketMessage{Packet: p.Packet, Message: p.Message, Args: make([]string, 0)}
 	for _, i := range p.Args {
 		r.Args = append(r.Args, fmt.Sprintf("%v", i))
 	}
@@ -210,7 +210,7 @@ func (p *Player) HandlePacket(message string) {
 		for _, pp := range p.L.Teams[i].Players {
 			ret = append(ret, pp.Name)
 		}
-		p.SendPacket(PacketMessage{Packet: Packet{Mtype: "contestants"}, Message: "", Args: ret})
+		p.SendPacket(PacketMessage{Packet: Packet{Mtype: "contestants"}, Message: strconv.Itoa(i), Args: ret})
 		return
 	}
 	if msg.Mtype == "getTeam" {
@@ -221,7 +221,7 @@ func (p *Player) HandlePacket(message string) {
 		}
 		p.SendPacket(NewPacketAny(
 			"teamInfo",
-			msg.Args[0],
+			strconv.Itoa(i),
 			[]any{NWTeamFromTeam(p.L.Teams[i])}))
 		return
 	}
@@ -243,15 +243,17 @@ type Team struct {
 	Players []*Player
 	Name    string
 	Color   color.RGBA
+	Score   int
 }
 
 type NWTeam struct {
 	Name  string
 	Color color.RGBA
+	Score int
 }
 
 func NWTeamFromTeam(t *Team) NWTeam {
-	return NWTeam{Name: t.Name, Color: t.Color}
+	return NWTeam{Name: t.Name, Color: t.Color, Score: t.Score}
 }
 
 type Lobby struct {
